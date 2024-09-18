@@ -1,13 +1,25 @@
-language: node_js
-node_js:
-  - '18'  
+language: bash
 
-cache:
-  directories:
-    - node_modules
+before_install:
+  - curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.4/install.sh | bash
+  - export NVM_DIR="$HOME/.nvm"
+  - [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+  - nvm install 18
 
 install:
   - npm install
 
 script:
   - npm run build
+  - zip -r -q build_artifact.zip build
+
+before_deploy:
+  - pip install --user awscli
+
+deploy:
+  provider: script
+  script:
+    - aws s3 cp build_artifact.zip s3://your-bucket-name/build_artifact.zip
+  skip_cleanup: true
+  on:
+    branch: main
