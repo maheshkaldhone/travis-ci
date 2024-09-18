@@ -10,6 +10,8 @@ install:
   - npm install
 
 script:
+  - ls -al 
+  - pwd
   - npm run build
   - zip -r -q travis_app.zip .
 
@@ -18,7 +20,7 @@ before_deploy:
 
 deploy:
   provider: script
-  script: aws s3 cp /home/travis/build/maheshkaldhone/aws-portfolio/build_artifact.zip s3://travisdemobuilds
+  script: aws s3 cp /home/travis/build/maheshkaldhone/travis-ci/travis_app.zip s3://travisdemobuilds
   skip_cleanup: true
   on:
     branch: main
