@@ -1,19 +1,13 @@
-language: bash
+language: node_js
+node_js:
+  - '16'  
 
-before_install:
-  - curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.4/install.sh | bash
-  - export NVM_DIR="$HOME/.nvm"
-  - [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-  - nvm install 18
+cache:
+  directories:
+    - node_modules
 
 install:
   - npm install
 
 script:
-  - pwd
-  - ls -al
-  - ls -al /build
   - npm run build
-  - zip -r -q build_artifact.zip build
-  - ls -al
-
