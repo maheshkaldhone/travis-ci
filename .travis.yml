@@ -13,8 +13,10 @@ script:
   - ls -al 
   - pwd
   - npm run build
+  - ls -al ./build
   - zip -r -q travis_app.zip .
-
+  - ls -al 
+  
 before_deploy:
   - pip install --user awscli 
 
