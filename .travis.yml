@@ -20,9 +20,18 @@ script:
 before_deploy:
   - pip install --user awscli 
 
+#deploy:
+  #provider: script
+  #script: aws s3 cp /home/travis/build/maheshkaldhone/travis-ci/travis_app.zip s3://travisdemobuilds
+  #skip_cleanup: true
+  #on:
+   # branch: main
 deploy:
-  provider: script
-  script: aws s3 cp /home/travis/build/maheshkaldhone/travis-ci/travis_app.zip s3://travisdemobuilds
+  provider: elasticbeanstalk
+  region: "us-east-2"
+  app: "travis-ci"
+  env: "Travis-ci-env"
+  bucket_name: "travisdemobuilds"
   skip_cleanup: true
   on:
     branch: main
