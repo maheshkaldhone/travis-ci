@@ -5,7 +5,6 @@ node_js:
 cache:
   directories:
     - node_modules
-    - build  # Cache the build folder to reuse across stages
 
 stages:
   - name: build
@@ -21,15 +20,16 @@ jobs:
       script:
         - ls -al
         - pwd
-        - npm install
+        # - npm install
         - npm run build
-        - zip -r -q travis_app.zip .  # Create the ZIP file
+        # Zip the build folder and package.json, excluding node_modules
+        - zip -r -q travis_app.zip . -x "node_modules/*" -x ".git/*" 
         - ls -al 
       before_cache:
-        - ls -al travis_app.zip  # Make sure the ZIP is listed in the logs for verification
+        - ls -al travis_app.zip  # Verify the ZIP is created properly
       cache:
         directories:
-          - ./travis_app.zip  # Ensure the ZIP file is cached
+          - node_modules
 
     # Linting Job (run in parallel, won't fail the stage)
     - stage: test
