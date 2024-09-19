@@ -1,37 +1,40 @@
 language: node_js
 node_js:
-  - '16'  
+  - '16'
 
 cache:
   directories:
     - node_modules
 
-install:
-  - npm install
+stages:
+  - name: build
+  - name: test
+  - name: deploy
+    if: branch = main 
+    
+jobs:
+  include:
+    - stage: build
+      script:
+        - npm install
+        - npm run build
+        - zip -r -q travis_app.zip .
 
-script:
-  - ls -al 
-  - pwd
-  - npm run build
-  - ls -al ./build
-  - zip -r -q travis_app.zip .
-  - ls -al 
-  
-before_deploy:
-  - pip install --user awscli 
+    - stage: test
+      script:
+        - npm run lint
+        - npm test
 
-#deploy:
-  #provider: script
-  #script: aws s3 cp /home/travis/build/maheshkaldhone/travis-ci/travis_app.zip s3://travisdemobuilds
-  #skip_cleanup: true
-  #on:
-   # branch: main
-deploy:
-  provider: elasticbeanstalk
-  region: "us-east-2"
-  app: "travis-ci"
-  env: "Travis-ci-env"
-  bucket_name: "travisdemobuilds"
-  skip_cleanup: true
-  on:
-    branch: main
+    - stage: deploy
+      before_deploy:
+        - pip install --user awscli
+      deploy:
+        - provider: elasticbeanstalk
+          region: "us-east-2"
+          app: "Travis-ci"
+          env: "Travis-ci-dev"
+          bucket_name: "travisdemobuilds"
+          bucket_path: "DEV"
+          skip_cleanup: true
+          on:
+            branch: main
