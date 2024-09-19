@@ -19,9 +19,14 @@ jobs:
     - stage: build
       name: "Build Application"
       script:
+        - pwd
+        - ls -al
         - npm install
         - npm run build
         - zip -r -q travis_app.zip .  # Create the ZIP file
+        - pwd
+        - ls -al ./build
+        - ls -al
       before_cache:
         - ls -al travis_app.zip  # Make sure the ZIP is listed in the logs for verification
       cache:
