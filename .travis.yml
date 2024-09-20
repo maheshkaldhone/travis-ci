@@ -1,3 +1,4 @@
+
 language: node_js
 node_js:
   - '16'
@@ -26,7 +27,7 @@ jobs:
         - zip -r -q travis_app.zip . -x "node_modules/*" -x ".git/*" 
         - ls -al 
       before_cache:
-        - rm -rf node_modules # Exclude node_modules from cache explicitly
+        - ls -al travis_app.zip  # Verify the ZIP is created properly
       cache:
         directories:
           - node_modules
@@ -37,12 +38,12 @@ jobs:
       script:
         - npm run lint || true
 
-    # Deploy to Elastic Beanstalk (Main and QA branches)
+    # Deploy Job (reuse the build artifact)
     - stage: deploy
       name: "Deploy to Elastic Beanstalk"
       before_deploy:
-        # Check if the ZIP file from build exists
-        - ls -al travis_app.zip
+        # Reuse the cached build ZIP
+        - ls -al travis_app.zip  # Ensure the ZIP file is available
         - pip install --user awscli
       deploy:
         - provider: elasticbeanstalk
