@@ -6,64 +6,37 @@ cache:
   directories:
     - node_modules
 
-stages:
-  - name: build
-  - name: test
-  - name: deploy
-    if: branch = main OR branch = qa  # Ensure branch names are correct and case-sensitive
+install:
+  - npm install
 
-jobs:
-  include:
-    # Build Job
-    - stage: build
-      name: "Build Application"
-      script:
-        - ls -al
-        - pwd
-        - npm install  # Uncomment to ensure dependencies are installed
-        - npm run build
-        # Zip the build folder and package.json, excluding node_modules
-        - zip -r -q travis_app.zip . -x "node_modules/*" -x ".git/*" 
-        - ls -al  # Verify that the ZIP file is created
+script:
+  - ls -al
+  - pwd
+  - npm run build
+  - ls -al ./build
+  - zip -r -q travis_app.zip .
+  - ls -al
 
-      before_cache:
-        - rm -rf node_modules  # Clean node_modules to avoid caching it unnecessarily
-      cache:
-        directories:
-          - node_modules
+before_deploy:
+  - pip install --user awscli
 
-    # Linting Job (run in parallel, won't fail the stage)
-    - stage: test
-      name: "Run Linting"
-      script:
-        - npm run lint || true
+deploy:
+  - provider: elasticbeanstalk
+    region: "us-east-2"
+    app: "travis-ci"
+    env: "Travis-ci-dev"  # Main environment for production
+    bucket_name: "travisdemobuilds"
+    bucket_path: "DEV"
+    skip_cleanup: true
+    on:
+      branch: main  # Only deploy to Elastic Beanstalk on main branch
 
-    # Deploy Job (reuse the build artifact)
-    - stage: deploy
-      name: "Deploy to Elastic Beanstalk"
-      before_deploy:
-        # Check if the ZIP file exists before deployment
-        - ls -al travis_app.zip
-        - pip install --user awscli
-      deploy:
-        - provider: elasticbeanstalk
-          region: "us-east-2"
-          app: "Travis-ci"
-          env: "Travis-ci-dev"
-          bucket_name: "travisdemobuilds"
-          bucket_path: "DEV"
-          zip_file: travis_app.zip
-          skip_cleanup: true
-          on:
-            branch: main  # Deploy to DEV on main branch
-
-        - provider: elasticbeanstalk
-          region: "us-east-2"
-          app: "Travis-ci"
-          env: "Travis-ci-qa"
-          bucket_name: "travisdemobuilds"
-          bucket_path: "QA"
-          zip_file: travis_app.zip
-          skip_cleanup: true
-          on:
-            branch: qa  # Ensure proper case of the QA branch for deployment
+  - provider: elasticbeanstalk
+    region: "us-east-2"
+    app: "travis-ci"
+    env: "Travis-ci-qa"  # QA environment
+    bucket_name: "travisdemobuilds"
+    bucket_path: "QA"
+    skip_cleanup: true
+    on:
+      branch: QA  # Deploy to Elastic Beanstalk on QA branch
