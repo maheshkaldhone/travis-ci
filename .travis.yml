@@ -10,7 +10,7 @@ stages:
   - name: build
   - name: test
   - name: deploy
-    if: branch = main 
+    if: branch = main OR branch = QA
 
 jobs:
   include:
@@ -26,7 +26,7 @@ jobs:
         - zip -r -q travis_app.zip . -x "node_modules/*" -x ".git/*" 
         - ls -al 
       before_cache:
-        - ls -al travis_app.zip  # Verify the ZIP is created properly
+        - rm -rf node_modules # Exclude node_modules from cache explicitly
       cache:
         directories:
           - node_modules
@@ -37,21 +37,32 @@ jobs:
       script:
         - npm run lint || true
 
-    # Deploy Job (reuse the build artifact)
+    # Deploy to Elastic Beanstalk (Main and QA branches)
     - stage: deploy
       name: "Deploy to Elastic Beanstalk"
       before_deploy:
-        # Reuse the cached build ZIP
-        - ls -al travis_app.zip  # Ensure the ZIP file is available
+        # Check if the ZIP file from build exists
+        - ls -al travis_app.zip
         - pip install --user awscli
       deploy:
-        provider: elasticbeanstalk
-        region: "us-east-2"
-        app: "Travis-ci"
-        env: "Travis-ci-dev"
-        bucket_name: "travisdemobuilds"
-        bucket_path: "DEV"
-        zip_file: travis_app.zip  # Deploy the same ZIP file created in the build stage
-        skip_cleanup: true
-      on:
-        branch: main
+        - provider: elasticbeanstalk
+          region: "us-east-2"
+          app: "Travis-ci"
+          env: "Travis-ci-dev"
+          bucket_name: "travisdemobuilds"
+          bucket_path: "DEV"
+          zip_file: travis_app.zip  # Use the ZIP created in the build stage
+          skip_cleanup: true
+          on:
+            branch: main
+
+        - provider: elasticbeanstalk
+          region: "us-east-2"
+          app: "Travis-ci"
+          env: "Travis-ci-qa"
+          bucket_name: "travisdemobuilds"
+          bucket_path: "QA"
+          zip_file: travis_app.zip
+          skip_cleanup: true
+          on:
+            branch: QA
