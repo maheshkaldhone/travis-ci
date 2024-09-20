@@ -1,4 +1,3 @@
-
 language: node_js
 node_js:
   - '16'
@@ -11,7 +10,7 @@ stages:
   - name: build
   - name: test
   - name: deploy
-    if: branch = main OR branch = QA
+    if: branch = main OR branch = qa  # Ensure branch names are correct and case-sensitive
 
 jobs:
   include:
@@ -21,13 +20,14 @@ jobs:
       script:
         - ls -al
         - pwd
-        # - npm install
+        - npm install  # Uncomment to ensure dependencies are installed
         - npm run build
         # Zip the build folder and package.json, excluding node_modules
         - zip -r -q travis_app.zip . -x "node_modules/*" -x ".git/*" 
-        - ls -al 
+        - ls -al  # Verify that the ZIP file is created
+
       before_cache:
-        - ls -al travis_app.zip  # Verify the ZIP is created properly
+        - rm -rf node_modules  # Clean node_modules to avoid caching it unnecessarily
       cache:
         directories:
           - node_modules
@@ -42,8 +42,8 @@ jobs:
     - stage: deploy
       name: "Deploy to Elastic Beanstalk"
       before_deploy:
-        # Reuse the cached build ZIP
-        - ls -al travis_app.zip  # Ensure the ZIP file is available
+        # Check if the ZIP file exists before deployment
+        - ls -al travis_app.zip
         - pip install --user awscli
       deploy:
         - provider: elasticbeanstalk
@@ -52,10 +52,10 @@ jobs:
           env: "Travis-ci-dev"
           bucket_name: "travisdemobuilds"
           bucket_path: "DEV"
-          zip_file: travis_app.zip  # Use the ZIP created in the build stage
+          zip_file: travis_app.zip
           skip_cleanup: true
           on:
-            branch: main
+            branch: main  # Deploy to DEV on main branch
 
         - provider: elasticbeanstalk
           region: "us-east-2"
@@ -66,4 +66,4 @@ jobs:
           zip_file: travis_app.zip
           skip_cleanup: true
           on:
-            branch: QA
+            branch: qa  # Ensure proper case of the QA branch for deployment
