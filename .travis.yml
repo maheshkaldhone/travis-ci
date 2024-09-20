@@ -1,57 +1,32 @@
 language: node_js
 node_js:
-  - '16'
+  - '16'  
 
 cache:
   directories:
     - node_modules
 
-stages:
-  - name: build
-  - name: test
-  - name: deploy
-    if: branch = main 
+install:
+  - npm install
 
-jobs:
-  include:
-    # Build Job
-    - stage: build
-      name: "Build Application"
-      script:
-        - ls -al
-        - pwd
-        # - npm install
-        - npm run build
-        # Zip the build folder and package.json, excluding node_modules
-        - zip -r -q travis_app.zip . -x "node_modules/*" -x ".git/*" 
-        - ls -al 
-      before_cache:
-        - ls -al travis_app.zip  # Verify the ZIP is created properly
-      cache:
-        directories:
-          - node_modules
-
-    # Linting Job (run in parallel, won't fail the stage)
-    - stage: test
-      name: "Run Linting"
-      script:
-        - npm run lint || true
-
-    # Deploy Job (reuse the build artifact)
-    - stage: deploy
-      name: "Deploy to Elastic Beanstalk"
-      before_deploy:
-        # Reuse the cached build ZIP
-        - ls -al travis_app.zip  # Ensure the ZIP file is available
-        - pip install --user awscli
-      deploy:
-        provider: elasticbeanstalk
-        region: "us-east-2"
-        app: "Travis-ci"
-        env: "Travis-ci-dev"
-        bucket_name: "travisdemobuilds"
-        bucket_path: "DEV"
-        zip_file: travis_app.zip  # Deploy the same ZIP file created in the build stage
-        skip_cleanup: true
-      on:
-        branch: main
+script:
+  - ls -al 
+  - pwd
+  - npm run build
+  - ls -al ./build
+  - zip -r -q travis_app.zip .
+  - ls -al 
+  
+before_deploy:
+  - pip install --user awscli 
+   
+deploy:
+  provider: elasticbeanstalk
+  region: "us-east-2"
+  app: "travis-ci"
+  env: "Travis-ci-dev"
+  bucket_name: "travisdemobuilds"
+  bucket_path: "DEV"
+  skip_cleanup: true
+  on:
+    branch: main
